@@ -6,6 +6,7 @@ import java.io.*;
 
 import common.ChatIF;
 import ocsf.server.*;
+import client.*;
 
 /**
  * This class overrides some of the methods in the abstract 
@@ -25,6 +26,11 @@ public class EchoServer extends AbstractServer
    * The default port to listen on.
    */
   final public static int DEFAULT_PORT = 5555;
+  
+  /*
+   * The infoType to access login id
+   */
+  final public static String LOGIN = "login";
   
 //Instance variables **********************************************
   
@@ -65,8 +71,22 @@ public class EchoServer extends AbstractServer
   public void handleMessageFromClient
     (Object msg, ConnectionToClient client)
   {
-	  serverUI.display("Message received: " + msg + " from " + client);
-	  this.sendToAllClients(new SimpleMessage(true, msg.toString()));
+	  String[] args = msg.toString().split(" ");
+	  if(args.length == 2 && args[0] == LOGIN) { // check if already logged in
+		  if(client.getInfo(LOGIN).toString() == null) // log user in
+			  client.setInfo("login", args[1]);
+		  else { // not logged in, send error message and terminate connection
+			  try {
+				  client.sendToClient("ERROR: already logged in, terminating connection");
+				  close();
+			  }
+			  catch(IOException e) {}
+		  }
+	  } else {
+		  serverUI.display("Message received: " + msg + " from " + client);
+		  this.sendToAllClients(new SimpleMessage(client.getInfo(LOGIN).toString(), msg.toString()));
+	  }
+	  
   }
     
   /**
@@ -97,7 +117,7 @@ public class EchoServer extends AbstractServer
 		  String command = message.substring(1);
 		  handleCommandFromSeverUI(command);
 	  } else {
-		  this.sendToAllClients(new SimpleMessage(false, message));
+		  this.sendToAllClients(new SimpleMessage("SERVER MSG", message));
 	  }
   }
   
