@@ -62,7 +62,7 @@ public class ChatClient extends AbstractClient
    * @param msg The message from the server.
    */
   public void handleMessageFromServer(Object msg) {
-    clientUI.display(msg.toString());
+	  clientUI.display(msg.toString());
   }
 
   /**
@@ -73,6 +73,7 @@ public class ChatClient extends AbstractClient
   public void handleMessageFromClientUI(String message)
   {
 	  if(message.charAt(0) == '#') { // check if the message is a command
+		  System.out.println("command");
 		  String command = message.substring(1);
 		  handleCommandFromClientUI(command);
 	  } else {
@@ -91,18 +92,21 @@ public class ChatClient extends AbstractClient
    */
   private void handleCommandFromClientUI(String command) {
 	  String[] args = command.split(" ");
-	  if(args[0] == "quit") {
+	  if(args[0].contains("quit")) {
 		  quit();
-	  } else if(args[0] == "logoff") {
+	  } else if(args[0].contains("logoff")) {
 		  try {
 		      closeConnection();
 		  }
 		  catch(IOException e) {}
-	  } else if(args[0] == "sethost") {
+	  } else if(args[0].contains("sethost")) {
 		  if(args.length == 1) // check if there enough parameters 
 			  clientUI.display("ERROR: sethost requires a 'host' parameter");
-		  else setHost(args[1]);
-	  } else if(args[0] == "setport") {
+		  else {
+			  setHost(args[1]);
+			  clientUI.display("Host set to: " + getHost());
+		  }
+	  } else if(args[0].contains("setport")) {
 		  if(args.length == 1) // check if there enough parameters 
 			  clientUI.display("ERROR: setport requires a 'port' parameter");
 		  else {
@@ -110,23 +114,24 @@ public class ChatClient extends AbstractClient
 			  try {
 			      port = Integer.parseInt(args[1]); //Get port from command parameter
 			      setPort(port);
+			      clientUI.display("Port set to: " + getPort());
 			  }
 			  catch(Throwable t) {
 				  clientUI.display("ERROR: port parameter needs to be an integer");
 			  }
 			  setHost(args[1]);
 		  }
-	  } else if(args[0] == "login") {
+	  } else if(args[0].contains("login")) {
 		  try {
 		      openConnection();
 		      login();
 		  }
 		  catch(IOException e) {}
-	  } else if(args[0] == "gethost") {
+	  } else if(args[0].contains("gethost")) {
 		  clientUI.display("Host: " + getHost());
-	  } else if(args[0] == "getport") {
+	  } else if(args[0].contains("getport")) {
 		  clientUI.display("Port: " + getPort());
-	  } else if(args[0] == "help") {
+	  } else if(args[0].contains("help")) {
 		  clientUI.display("Commands: quit, logoff, sethost <host>, setport <port>, login, gethost, getport");
 	  } else {
 		  clientUI.display("Unrecognized command \"" + args[0] + "\" type #help for list of commands");
@@ -165,7 +170,6 @@ public class ChatClient extends AbstractClient
   @Override
   public void connectionClosed() {
 	  System.out.println("Server has shut down.");
-	  quit();
   }
   
   /* 
@@ -173,8 +177,7 @@ public class ChatClient extends AbstractClient
    */
   @Override
   public void connectionException(Exception e) {
-	  System.out.println("Connection to server has failed: " + e);
-	  quit();
+	  System.out.println("SERVER SHUTTING DOWN! DISCONECTING!");
   }
 }
 //End of ChatClient class

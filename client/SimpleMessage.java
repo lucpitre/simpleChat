@@ -4,7 +4,7 @@ package client;
  * Simple message
  */
 public class SimpleMessage {
-	private String id; // true if message is sent from a client, false if sent from server
+	private String id; 
 	private String msg;
 	
 	public SimpleMessage(String id, String msg) {

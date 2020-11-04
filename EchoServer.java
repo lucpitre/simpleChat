@@ -6,7 +6,6 @@ import java.io.*;
 
 import common.ChatIF;
 import ocsf.server.*;
-import client.*;
 
 /**
  * This class overrides some of the methods in the abstract 
@@ -68,13 +67,16 @@ public class EchoServer extends AbstractServer
    * @param msg The message received from the client.
    * @param client The connection from which the message originated.
    */
-  public void handleMessageFromClient
-    (Object msg, ConnectionToClient client)
-  {
+  public void handleMessageFromClient(Object msg, ConnectionToClient client) {
 	  String[] args = msg.toString().split(" ");
-	  if(args.length == 2 && args[0] == LOGIN) { // check if already logged in
-		  if(client.getInfo(LOGIN).toString() == null) // log user in
-			  client.setInfo("login", args[1]);
+	  serverUI.display("Message received: " + msg + " from " + client.getInfo(LOGIN));
+	  
+	  if(args.length == 2 && args[0].contains("#login")) { // check if already logged in
+		  if(client.getInfo(LOGIN) == null) {// log user in
+			  client.setInfo(LOGIN, args[1]);
+			  serverUI.display("<" + args[1] +"> has logged on.");
+			  this.sendToAllClients("<" + args[1] +"> has logged on.");
+		  }
 		  else { // not logged in, send error message and terminate connection
 			  try {
 				  client.sendToClient("ERROR: already logged in, terminating connection");
@@ -83,8 +85,7 @@ public class EchoServer extends AbstractServer
 			  catch(IOException e) {}
 		  }
 	  } else {
-		  serverUI.display("Message received: " + msg + " from " + client);
-		  this.sendToAllClients(new SimpleMessage(client.getInfo(LOGIN).toString(), msg.toString()));
+		  this.sendToAllClients(client.getInfo(LOGIN) + "> " + msg);
 	  }
 	  
   }
@@ -117,13 +118,19 @@ public class EchoServer extends AbstractServer
 		  String command = message.substring(1);
 		  handleCommandFromSeverUI(command);
 	  } else {
-		  this.sendToAllClients(new SimpleMessage("SERVER MSG", message));
+		  this.sendToAllClients("SERVER MSG> " +message);
 	  }
   }
   
   private void handleCommandFromSeverUI(String command) {
 	  String[] args = command.split(" ");
-	  if(args[0] == "quit") {
+	  if(args[0].contains("quit")) {
+		  try {
+				close();
+			} catch (IOException e) {}
+	  } else if(args[0].contains("stop")) {
+		  stopListening();
+	  } else if(args[0].contains("close")) {
 		  stopListening();
 		  // Close the client sockets of the already connected clients
 	      Thread[] clientThreadList = getClientConnections();
@@ -134,13 +141,7 @@ public class EchoServer extends AbstractServer
 	    	  // Ignore all exceptions when closing clients.
 	    	  catch(Exception ex) {}
 	      }
-	  } else if(args[0] == "stop") {
-		  stopListening();
-	  } else if(args[0] == "close") {
-		  try {
-			close();
-		} catch (IOException e) {}
-	  } else if(args[0] == "setport") {
+	  } else if(args[0].contains("setport")) {
 		  if(args.length == 1) // check if there enough parameters 
 			  serverUI.display("ERROR: setport requires a 'port' parameter");
 		  else {
@@ -154,14 +155,14 @@ public class EchoServer extends AbstractServer
 			  }
 			  setPort(Integer.parseInt(args[1]));
 		  }
-	  } else if(args[0] == "start") {
+	  } else if(args[0].contains("start")) {
 		  try {
 		      listen();
 		  }
 		  catch(IOException e) {}
-	  }  else if(args[0] == "getport") {
+	  }  else if(args[0].contains("getport")) {
 		  serverUI.display("Port: " + getPort());
-	  } else if(args[0] == "help") {
+	  } else if(args[0].contains("help")) {
 		  serverUI.display("Commands: quit, stop, close, setport <port>, start, getport");
 	  } else {
 		  serverUI.display("Unrecognized command \"" + args[0] + "\" type #help for list of commands");
@@ -173,7 +174,7 @@ public class EchoServer extends AbstractServer
    */
   @Override
   public void clientConnected(ConnectionToClient c) {
-	  serverUI.display(c + " has connected to the server.");
+	  serverUI.display("A new client is attempting to connect to the server.");
   }
   
   /*
