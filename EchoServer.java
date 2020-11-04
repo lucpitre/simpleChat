@@ -66,7 +66,7 @@ public class EchoServer extends AbstractServer
     (Object msg, ConnectionToClient client)
   {
 	  serverUI.display("Message received: " + msg + " from " + client);
-    this.sendToAllClients(new SimpleMessage(true, msg.toString()));
+	  this.sendToAllClients(new SimpleMessage(true, msg.toString()));
   }
     
   /**
