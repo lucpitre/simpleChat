@@ -91,12 +91,18 @@ public class ChatClient extends AbstractClient
     System.exit(0);
   }
   
+  /*
+   * This method is called when the connection to the server is closed
+   */
   @Override
   public void connectionClosed() {
 	  System.out.println("Server has shut down.");
 	  quit();
   }
   
+  /* 
+   * This method is called when the connection to the server fails
+   */
   @Override
   public void connectionException(Exception e) {
 	  System.out.println("Connection to server has failed: " + e);

@@ -138,6 +138,7 @@ public class ClientConsole implements ChatIF
       port = DEFAULT_PORT; //Set port to 5555
     }
     
+    
     ClientConsole chat= new ClientConsole(host, port);
     chat.accept();  //Wait for console data
   }
