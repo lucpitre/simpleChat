@@ -54,8 +54,7 @@ public class ChatClient extends AbstractClient
    *
    * @param msg The message from the server.
    */
-  public void handleMessageFromServer(Object msg) 
-  {
+  public void handleMessageFromServer(Object msg) {
     clientUI.display(msg.toString());
   }
 
@@ -94,11 +93,11 @@ public class ChatClient extends AbstractClient
 		  catch(IOException e) {}
 	  } else if(args[0] == "sethost") {
 		  if(args.length == 1) // check if there enough parameters 
-			  System.out.println("ERROR: sethost requires a 'host' parameter");
+			  clientUI.display("ERROR: sethost requires a 'host' parameter");
 		  else setHost(args[1]);
 	  } else if(args[0] == "setport") {
 		  if(args.length == 1) // check if there enough parameters 
-			  System.out.println("ERROR: sethost requires a 'port' parameter");
+			  clientUI.display("ERROR: setport requires a 'port' parameter");
 		  else {
 			  int port;
 			  try {
@@ -106,7 +105,7 @@ public class ChatClient extends AbstractClient
 			      setPort(port);
 			  }
 			  catch(Throwable t) {
-			      System.out.println("ERROR: port parameter needs to be an integer");
+				  clientUI.display("ERROR: port parameter needs to be an integer");
 			  }
 			  setHost(args[1]);
 		  }
@@ -116,13 +115,13 @@ public class ChatClient extends AbstractClient
 		  }
 		  catch(IOException e) {}
 	  } else if(args[0] == "gethost") {
-		  System.out.println("Host: " + getHost());
+		  clientUI.display("Host: " + getHost());
 	  } else if(args[0] == "getport") {
-		  System.out.println("Host: " + getPort());
+		  clientUI.display("Port: " + getPort());
 	  } else if(args[0] == "help") {
-		  System.out.println("Commands: quit, logoff, sethost <host>, setport <port>, login, gethost, getport");
+		  clientUI.display("Commands: quit, logoff, sethost <host>, setport <port>, login, gethost, getport");
 	  } else {
-		  System.out.println("Unrecognized command \"" + args[0] + "\" type #help for list of commands");
+		  clientUI.display("Unrecognized command \"" + args[0] + "\" type #help for list of commands");
 	  }
   }
   

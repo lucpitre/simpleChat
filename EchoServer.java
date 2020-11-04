@@ -3,6 +3,8 @@
 // license found at www.lloseng.com 
 
 import java.io.*;
+
+import common.ChatIF;
 import ocsf.server.*;
 
 /**
@@ -24,6 +26,14 @@ public class EchoServer extends AbstractServer
    */
   final public static int DEFAULT_PORT = 5555;
   
+//Instance variables **********************************************
+  
+  /**
+   * The interface type variable.  It allows the implementation of 
+   * the display method in the server.
+   */
+  ChatIF serverUI; 
+  
   //Constructors ****************************************************
   
   /**
@@ -31,9 +41,16 @@ public class EchoServer extends AbstractServer
    *
    * @param port The port number to connect on.
    */
-  public EchoServer(int port) 
+  public EchoServer(int port, ChatIF serverUI) throws Exception
   {
     super(port);
+    this.serverUI = serverUI;
+    try {
+      listen(); //Start listening for connections
+    } 
+    catch (Exception ex) {
+    	serverUI.display("ERROR - Could not listen for clients!");
+    }
   }
 
   
@@ -48,8 +65,8 @@ public class EchoServer extends AbstractServer
   public void handleMessageFromClient
     (Object msg, ConnectionToClient client)
   {
-    System.out.println("Message received: " + msg + " from " + client);
-    this.sendToAllClients(msg);
+	  serverUI.display("Message received: " + msg + " from " + client);
+    this.sendToAllClients(new SimpleMessage(true, msg.toString()));
   }
     
   /**
@@ -58,7 +75,7 @@ public class EchoServer extends AbstractServer
    */
   protected void serverStarted()
   {
-    System.out.println
+	  serverUI.display
       ("Server listening for connections on port " + getPort());
   }
   
@@ -68,42 +85,67 @@ public class EchoServer extends AbstractServer
    */
   protected void serverStopped()
   {
-    System.out.println
+	  serverUI.display
       ("Server has stopped listening for connections.");
   }
   
   //Class methods ***************************************************
   
-  /**
-   * This method is responsible for the creation of 
-   * the server instance (there is no UI in this phase).
-   *
-   * @param args[0] The port number to listen on.  Defaults to 5555 
-   *          if no argument is entered.
-   */
-  public static void main(String[] args) 
+  public void handleMessageFromServerUI(String message)
   {
-    int port = 0; //Port to listen on
-
-    try
-    {
-      port = Integer.parseInt(args[0]); //Get port from command line
-    }
-    catch(Throwable t)
-    {
-      port = DEFAULT_PORT; //Set port to 5555
-    }
-	
-    EchoServer sv = new EchoServer(port);
-    
-    try 
-    {
-      sv.listen(); //Start listening for connections
-    } 
-    catch (Exception ex) 
-    {
-      System.out.println("ERROR - Could not listen for clients!");
-    }
+	  if(message.charAt(0) == '#') { // check if the message is a command
+		  String command = message.substring(1);
+		  handleCommandFromSeverUI(command);
+	  } else {
+		  this.sendToAllClients(new SimpleMessage(false, message));
+	  }
+  }
+  
+  private void handleCommandFromSeverUI(String command) {
+	  String[] args = command.split(" ");
+	  if(args[0] == "quit") {
+		  stopListening();
+		  // Close the client sockets of the already connected clients
+	      Thread[] clientThreadList = getClientConnections();
+	      for (int i=0; i<clientThreadList.length; i++) {
+	    	  try {
+	    		  ((ConnectionToClient)clientThreadList[i]).close();
+	    	  }
+	    	  // Ignore all exceptions when closing clients.
+	    	  catch(Exception ex) {}
+	      }
+	  } else if(args[0] == "stop") {
+		  stopListening();
+	  } else if(args[0] == "close") {
+		  try {
+			close();
+		} catch (IOException e) {}
+	  } else if(args[0] == "setport") {
+		  if(args.length == 1) // check if there enough parameters 
+			  serverUI.display("ERROR: setport requires a 'port' parameter");
+		  else {
+			  int port;
+			  try {
+			      port = Integer.parseInt(args[1]); //Get port from command parameter
+			      setPort(port);
+			  }
+			  catch(Throwable t) {
+				  serverUI.display("ERROR: port parameter needs to be an integer");
+			  }
+			  setPort(Integer.parseInt(args[1]));
+		  }
+	  } else if(args[0] == "start") {
+		  try {
+		      listen();
+		  }
+		  catch(IOException e) {}
+	  }  else if(args[0] == "getport") {
+		  serverUI.display("Port: " + getPort());
+	  } else if(args[0] == "help") {
+		  serverUI.display("Commands: quit, stop, close, setport <port>, start, getport");
+	  } else {
+		  serverUI.display("Unrecognized command \"" + args[0] + "\" type #help for list of commands");
+	  }
   }
   
   /*
@@ -111,7 +153,7 @@ public class EchoServer extends AbstractServer
    */
   @Override
   public void clientConnected(ConnectionToClient c) {
-	  System.out.println(c.getInetAddress() + " has connected to the server.");
+	  serverUI.display(c + " has connected to the server.");
   }
   
   /*
@@ -119,7 +161,7 @@ public class EchoServer extends AbstractServer
    */
   @Override
   public void clientDisconnected(ConnectionToClient c) {
-	  System.out.println(c.getInetAddress() + " has disconnected from the server.");
+	  serverUI.display(c + " has disconnected from the server.");
   }
 }
 //End of EchoServer class
