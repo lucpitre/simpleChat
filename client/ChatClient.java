@@ -66,16 +66,64 @@ public class ChatClient extends AbstractClient
    */
   public void handleMessageFromClientUI(String message)
   {
-    try
-    {
-      sendToServer(message);
-    }
-    catch(IOException e)
-    {
-      clientUI.display
-        ("Could not send message to server.  Terminating client.");
-      quit();
-    }
+	  if(message.charAt(0) == '#') { // check if the message is a command
+		  String command = message.substring(1);
+		  handleCommandFromClientUI(command);
+	  } else {
+		  try {
+		      sendToServer(message);
+		  }
+		  catch(IOException e) {
+		      clientUI.display("Could not send message to server.  Terminating client.");
+		      quit();
+		  }
+	  }
+  }
+  
+  /*
+   * This method handles commands coming from the UI
+   */
+  private void handleCommandFromClientUI(String command) {
+	  String[] args = command.split(" ");
+	  if(args[0] == "quit") {
+		  quit();
+	  } else if(args[0] == "logoff") {
+		  try {
+		      closeConnection();
+		  }
+		  catch(IOException e) {}
+	  } else if(args[0] == "sethost") {
+		  if(args.length == 1) // check if there enough parameters 
+			  System.out.println("ERROR: sethost requires a 'host' parameter");
+		  else setHost(args[1]);
+	  } else if(args[0] == "setport") {
+		  if(args.length == 1) // check if there enough parameters 
+			  System.out.println("ERROR: sethost requires a 'port' parameter");
+		  else {
+			  int port;
+			  try {
+			      port = Integer.parseInt(args[1]); //Get port from command parameter
+			      setPort(port);
+			  }
+			  catch(Throwable t) {
+			      System.out.println("ERROR: port parameter needs to be an integer");
+			  }
+			  setHost(args[1]);
+		  }
+	  } else if(args[0] == "login") {
+		  try {
+		      openConnection();
+		  }
+		  catch(IOException e) {}
+	  } else if(args[0] == "gethost") {
+		  System.out.println("Host: " + getHost());
+	  } else if(args[0] == "getport") {
+		  System.out.println("Host: " + getPort());
+	  } else if(args[0] == "help") {
+		  System.out.println("Commands: quit, logoff, sethost <host>, setport <port>, login, gethost, getport");
+	  } else {
+		  System.out.println("Unrecognized command \"" + args[0] + "\" type #help for list of commands");
+	  }
   }
   
   /**
